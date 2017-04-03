@@ -23,9 +23,11 @@ Write a function (f) that takes a vector of numbers, **x**, and returns a vector
 
 ```{r}
 f <- function(x) {
-  
-  # ...
-  
+  o = NULL
+  for(i in 1:length(x)){
+    o = c(o,prod(x[-i]))
+  }
+  return(o)
 }
 
 ```
@@ -35,7 +37,7 @@ f <- function(x) {
 ## Exercise 2
 
 Write a function f(x) to accept an integer vector, and returns a vector with those numbers except for: 
-   multiples of 3 replaced by "Fizz" 
+   multiples of 3 replaced by "Fizz"? 
    multiples of 5 replaced by "Buzz" 
    multiples of 3 and 5 replaced by "FizzBuzz""
    
@@ -50,7 +52,12 @@ Write a function f(x) to accept an integer vector, and returns a vector with tho
 
 ```{r}
 f <- function(x) {
-  # ...
-  
+  xd3 <- x%%3
+  xd3 <- ifelse(xd3==0, "Fizz", "")
+  xd5 <- x%%5
+  xd5 <- ifelse(xd5==0, "Buzz", "")
+  newx <- paste0(xd3,xd5)
+  o <- ifelse(x > newx, x, newx)
+  return(o)
 }
 ```
