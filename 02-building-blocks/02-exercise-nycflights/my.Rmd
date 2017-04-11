@@ -1,0 +1,7 @@
+readFiles = function(directoryPath) {
+  fileList = list.files(directoryPath, full.names = TRUE, pattern="*.csv") ##reading all the files names in the directory
+  allFiles = lapply(fileList, function(x){read.csv(file=x,header=TRUE)})
+  Reduce(function(x,y) {merge(x,y)}, allFiles)
+}
+
+readFiles("data")

@@ -1,7 +1,7 @@
 ---
 title: "Assingment NYC Flight Data"
-author: "Your Name Here"
-date: "October 5, 2016"
+author: "Abhishek Chaturvedi"
+date: "April 9, 2017"
 output: html_document
 ---
 
@@ -25,6 +25,12 @@ Using the `readr` package read the `flights` data.
 
 ```{r}
 
+#install.packages("data.table")
+
+library(data.table)
+
+flightsData <- fread("data/flights.csv")
+print(flightsData)
 
 ```
 
@@ -34,6 +40,13 @@ Plot a histogram of arrival delays and departure delays
 
 ```{r}
 
+library(data.table)
+
+flightsData <- fread("data/flights.csv")
+
+hist(flightsData[arr_delay > 0, arr_delay], main="histogram for arrival delays")
+hist(flightsData[dep_delay > 0, dep_delay], main="histogram for departure delays")
+
 ```
 
 ## Scatterplot
@@ -41,6 +54,15 @@ Plot a histogram of arrival delays and departure delays
 Plot a scatterplot of date vs arrival delay 
 
 ```{r}
+
+library(data.table)
+
+flightsData <- fread("data/flights.csv")
+
+# calculating data out of year month and day column and calculating mean arrival delay
+arrDelayVsDate <- flightsData[arr_delay > 0, .(mean(arr_delay), as.Date(paste0(year, "/" , month, "/" , day))), by = .(year, month, day)]
+
+plot(arrDelayVsDate[,.(calc_date=V2, delay_arr=V1)], main="Average arrival delays for every date")
 
 ```
 
@@ -52,6 +74,14 @@ Create a `table`, counting the flights by origin airports and carrier.
 
 ```{r}
 
+library(data.table)
+
+flightsData <- fread("data/flights.csv")
+
+# generate data using DT
+flightsSummary <- flightsData[,.N, by = .(origin, carrier)]
+
+print(flightsSummary)
 
 ```
 
@@ -62,7 +92,23 @@ Create a `table`, counting the flights by origin airports and carrier.
 
 ```{r}
 
-```
+library(data.table)
 
+flightsData <- fread("data/flights.csv")
+planesData <- fread("data/planes.csv")
+airportsData <- fread("data/airports.csv")
+weatherData <- fread("data/weather.csv")
+
+flightsPlanesData <- merge(flightsData,planesData, by.x="tailnum", by.y="tailnum" , all.x = TRUE, suffixes = c(".flights", ".planes"))
+
+flightsPlanesOriginData <- merge(flightsPlanesData,airportsData, by.x = "origin", by.y = "faa", all.x = TRUE, suffixes = c(".flights", ".origin"))
+
+flightsPlanesOriginDestinationData <- merge(flightsPlanesOriginData,airportsData, by.x = "dest", by.y = "faa", all.x = TRUE, suffixes = c(".origin", ".dest"))
+
+flightsPlanesOriginDestinationWeatherData <- merge(flightsPlanesOriginDestinationData,weatherData, by.x = c("year.flights", "month", "day", "origin", "time_hour"), by.y = c("year", "month", "day", "origin", "time_hour"), all.x = TRUE, suffixes = c(".flights", ".weather"), allow.cartesian=FALSE)
+
+print(flightsPlanesOriginDestinationWeatherData)
+
+```
 
 
