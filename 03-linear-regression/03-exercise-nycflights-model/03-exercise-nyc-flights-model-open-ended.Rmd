@@ -116,21 +116,19 @@ As per the data arr_delay has strong relation with the hour of the day
 ```{r "generating model" }
 
 # removing all the data which doesnt seems to have affect on arr_delay or redundent
-flightsModelData <- flightsPlanesOriginDestinationWeatherData[,.(arr_delay,humid,dep_time, sched_dep_time,sched_arr_time,dep_delay,origin)]
+flightsModelData <- na.omit(flightsPlanesOriginDestinationWeatherData[,.(arr_delay,humid,dep_time, sched_dep_time,sched_arr_time,dep_delay,origin)])
 
 #generating training data and test data out of the data set
 trainingData <- flightsModelData[sample(.N,50000)]
 testData1 <- flightsModelData[sample(.N,50000)]
 testData2 <- flightsModelData[sample(.N,50000)]
-testData3 <- flightsModelData[sample(.N,50000)]
+
 
 #generating linear model on the seleced predictors
 model1 <- lm(arr_delay~., data=trainingData)
 
 summary(predict(model1, testData1))
 summary(predict(model1, testData2))
-summary(predict(model1, testData3))
-
 
 ```
 
@@ -138,3 +136,21 @@ summary(predict(model1, testData3))
 
 Is this a good model?  (Write your answer here.)
 
+```{r}
+
+# function to calculate root mean square error
+rmse <- function(error){
+  sqrt(mean(error^2))
+}
+
+#taking mean of of the data as the baseline for test set1
+rmse(testData1[,arr_delay]-mean(testData1[,arr_delay]))
+rmse(testData1[,arr_delay]-predict(model1,testData1))
+# clearly shows that model has low error compare to mean arr_delay
+
+#taking mean of of the data as the baseline for test set2
+rmse(testData2[,arr_delay]-mean(testData2[,arr_delay]))
+rmse(testData2[,arr_delay]-predict(model1,testData2))
+# clearly shows that model has low error compare to mean arr_delay
+
+```

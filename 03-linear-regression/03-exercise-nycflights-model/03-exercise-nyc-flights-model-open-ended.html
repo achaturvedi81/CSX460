@@ -182,16 +182,155 @@ flightsPlanesOriginDestinationWeatherData &lt;- merge(flightsPlanesOriginDestina
 <ul>
 <li>Data has already ben read as data table</li>
 </ul>
-<pre class="r"><code># removing all the data which doesnt seems to have affect on arr_delay or redundent
-flightsModelData &lt;- flightsPlanesOriginDestinationWeatherData[,.(month,day,origin,time_hour,dest,sched_dep_time,dep_delay,sched_arr_time,arr_delay,carrier,air_time,distance,hour.flights,minute,year.planes,type,manufacturer,model,engines,seats,speed,engine,tz.origin,tz.dest,temp,dewp,humid,wind_dir,wind_speed,wind_gust,precip,pressure,visib)]</code></pre>
 </div>
 <div id="step-4-initial-tests" class="section level2">
-<h2>## Step 4: Initial Tests</h2>
+<h2>Step 4: Initial Tests</h2>
+<pre class="r"><code>summary(flightsPlanesOriginDestinationWeatherData[,.(arr_delay)])</code></pre>
+<pre><code>##    arr_delay       
+##  Min.   : -86.000  
+##  1st Qu.: -17.000  
+##  Median :  -5.000  
+##  Mean   :   6.895  
+##  3rd Qu.:  14.000  
+##  Max.   :1272.000  
+##  NA's   :9430</code></pre>
+<div id="identify-all-the-predictors-which-has-strong-correlation-with-arr_delay" class="section level3">
+<h3>Identify all the predictors which has strong correlation with arr_delay</h3>
+<pre class="r"><code>cor(flightsPlanesOriginDestinationWeatherData[,.(arr_delay,year.planes,engines, seats,speed)],use = &quot;complete.obs&quot;)</code></pre>
+<pre><code>##               arr_delay year.planes     engines       seats       speed
+## arr_delay    1.00000000  0.05085977 -0.04148486 -0.02829228 -0.02474988
+## year.planes  0.05085977  1.00000000 -0.17377469 -0.03634206  0.12126712
+## engines     -0.04148486 -0.17377469  1.00000000  0.61609296  0.56938047
+## seats       -0.02829228 -0.03634206  0.61609296  1.00000000  0.95663534
+## speed       -0.02474988  0.12126712  0.56938047  0.95663534  1.00000000</code></pre>
+<p>as per above data there is no significant relation between planes data and arr_delay</p>
+<pre class="r"><code>cor(flightsPlanesOriginDestinationWeatherData[,.(arr_delay,temp,dewp,humid,wind_dir,wind_speed,wind_gust,precip,pressure,visib)],use = &quot;complete.obs&quot;)</code></pre>
+<pre><code>##               arr_delay        temp        dewp       humid    wind_dir
+## arr_delay   1.000000000 -0.03121367  0.01868063  0.11396519 -0.01199624
+## temp       -0.031213668  1.00000000  0.89363831  0.05655943 -0.11223956
+## dewp        0.018680632  0.89363831  1.00000000  0.48966858 -0.25078958
+## humid       0.113965187  0.05655943  0.48966858  1.00000000 -0.35344943
+## wind_dir   -0.011996240 -0.11223956 -0.25078958 -0.35344943  1.00000000
+## wind_speed  0.008168269 -0.15030427 -0.21116660 -0.18283861  0.36150486
+## wind_gust   0.008168218 -0.15030455 -0.21116681 -0.18283854  0.36150478
+## precip      0.036780609 -0.03330050  0.06058133  0.24467991 -0.08745800
+## pressure   -0.089520556 -0.23143198 -0.26922960 -0.16525608 -0.19518333
+## visib      -0.072266236  0.09446433 -0.10465359 -0.50789987  0.20080963
+##              wind_speed    wind_gust      precip    pressure       visib
+## arr_delay   0.008168269  0.008168218  0.03678061 -0.08952056 -0.07226624
+## temp       -0.150304267 -0.150304547 -0.03330050 -0.23143198  0.09446433
+## dewp       -0.211166597 -0.211166809  0.06058133 -0.26922960 -0.10465359
+## humid      -0.182838611 -0.182838541  0.24467991 -0.16525608 -0.50789987
+## wind_dir    0.361504859  0.361504778 -0.08745800 -0.19518333  0.20080963
+## wind_speed  1.000000000  1.000000000 -0.01016291 -0.21828660  0.11175837
+## wind_gust   1.000000000  1.000000000 -0.01016293 -0.21828647  0.11175841
+## precip     -0.010162910 -0.010162930  1.00000000 -0.09629305 -0.40272155
+## pressure   -0.218286603 -0.218286469 -0.09629305  1.00000000  0.09601340
+## visib       0.111758373  0.111758409 -0.40272155  0.09601340  1.00000000</code></pre>
+<p>As per above data arr_delay has a little more relation with humidity</p>
+<pre class="r"><code>cor(flightsPlanesOriginDestinationWeatherData[,.(arr_delay,lat.origin, lat.dest, lon.origin, lon.dest, alt.origin, alt.dest, tz.origin, tz.dest)],use = &quot;complete.obs&quot;)</code></pre>
+<pre><code>## Warning in cor(flightsPlanesOriginDestinationWeatherData[, .(arr_delay, :
+## the standard deviation is zero</code></pre>
+<pre><code>##               arr_delay   lat.origin     lat.dest  lon.origin     lon.dest
+## arr_delay   1.000000000 -0.004112084  0.020398860 -0.03633479  0.051141530
+## lat.origin -0.004112084  1.000000000  0.008955241 -0.08954832  0.239559618
+## lat.dest    0.020398860  0.008955241  1.000000000 -0.02186019 -0.008795101
+## lon.origin -0.036334794 -0.089548316 -0.021860186  1.00000000 -0.011616826
+## lon.dest    0.051141530  0.239559618 -0.008795101 -0.01161683  1.000000000
+## alt.origin  0.003508598  0.978879109  0.013088614 -0.29127557  0.232481060
+## alt.dest    0.010154338  0.077217533  0.263068625 -0.03077523 -0.215648764
+## tz.origin            NA           NA           NA          NA           NA
+## tz.dest     0.052720891  0.251806405 -0.113120179 -0.02399876  0.966702675
+##              alt.origin    alt.dest tz.origin     tz.dest
+## arr_delay   0.003508598  0.01015434        NA  0.05272089
+## lat.origin  0.978879109  0.07721753        NA  0.25180641
+## lat.dest    0.013088614  0.26306863        NA -0.11312018
+## lon.origin -0.291275574 -0.03077523        NA -0.02399876
+## lon.dest    0.232481060 -0.21564876        NA  0.96670268
+## alt.origin  1.000000000  0.08048435        NA  0.24678565
+## alt.dest    0.080484352  1.00000000        NA -0.20340736
+## tz.origin            NA          NA         1          NA
+## tz.dest     0.246785647 -0.20340736        NA  1.00000000</code></pre>
+<p>No significant relation found between airport geographical details and timezone and arr_delay</p>
+<pre class="r"><code>cor(flightsPlanesOriginDestinationWeatherData[,.(arr_delay,dep_time,sched_dep_time,arr_time,sched_arr_time,dep_delay,air_time,distance)],use = &quot;complete.obs&quot;)</code></pre>
+<pre><code>##                  arr_delay    dep_time sched_dep_time   arr_time
+## arr_delay       1.00000000  0.23230573     0.17389620 0.02448214
+## dep_time        0.23230573  1.00000000     0.95482687 0.66250900
+## sched_dep_time  0.17389620  0.95482687     1.00000000 0.64438677
+## arr_time        0.02448214  0.66250900     0.64438677 1.00000000
+## sched_arr_time  0.13326129  0.78444199     0.78058744 0.79078877
+## dep_delay       0.91480276  0.25961272     0.19892350 0.02942101
+## air_time       -0.03529709 -0.01461948    -0.01553213 0.05429603
+## distance       -0.06186776 -0.01413373    -0.01293250 0.04718917
+##                sched_arr_time   dep_delay    air_time    distance
+## arr_delay          0.13326129  0.91480276 -0.03529709 -0.06186776
+## dep_time           0.78444199  0.25961272 -0.01461948 -0.01413373
+## sched_dep_time     0.78058744  0.19892350 -0.01553213 -0.01293250
+## arr_time           0.79078877  0.02942101  0.05429603  0.04718917
+## sched_arr_time     1.00000000  0.16049724  0.07891830  0.07361354
+## dep_delay          0.16049724  1.00000000 -0.02240508 -0.02168090
+## air_time           0.07891830 -0.02240508  1.00000000  0.99064965
+## distance           0.07361354 -0.02168090  0.99064965  1.00000000</code></pre>
+<p>As per the data arr_delay has strong relation with dep_time, sched_dep_time, sched_arr_time, dep_delay</p>
+<pre class="r"><code>cor(flightsPlanesOriginDestinationWeatherData[,.(arr_delay,month,day,hour.flights,minute)],use = &quot;complete.obs&quot;)</code></pre>
+<pre><code>##                  arr_delay        month           day  hour.flights
+## arr_delay     1.0000000000 -0.017382024 -3.191569e-04  1.734556e-01
+## month        -0.0173820236  1.000000000  5.035873e-03 -3.986499e-03
+## day          -0.0003191569  0.005035873  1.000000e+00  4.093062e-05
+## hour.flights  0.1734555731 -0.003986499  4.093062e-05  1.000000e+00
+## minute        0.0215222141  0.014983528  8.738999e-04  4.193144e-02
+##                    minute
+## arr_delay    0.0215222141
+## month        0.0149835282
+## day          0.0008738999
+## hour.flights 0.0419314377
+## minute       1.0000000000</code></pre>
+<p>As per the data arr_delay has strong relation with the hour of the day</p>
+</div>
+</div>
+<div id="step-5-eda" class="section level2">
+<h2>Step 5: EDA</h2>
+<pre class="r"><code># removing all the data which doesnt seems to have affect on arr_delay or redundent
+flightsModelData &lt;- na.omit(flightsPlanesOriginDestinationWeatherData[,.(arr_delay,humid,dep_time, sched_dep_time,sched_arr_time,dep_delay,origin)])
+
+#generating training data and test data out of the data set
+trainingData &lt;- flightsModelData[sample(.N,50000)]
+testData1 &lt;- flightsModelData[sample(.N,50000)]
+testData2 &lt;- flightsModelData[sample(.N,50000)]
+
+
+#generating linear model on the seleced predictors
+model1 &lt;- lm(arr_delay~., data=trainingData)
+
+summary(predict(model1, testData1))</code></pre>
+<pre><code>##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
+##  -33.4700  -11.5500   -7.8220    2.1540   -0.4255 1300.0000</code></pre>
+<pre class="r"><code>summary(predict(model1, testData2))</code></pre>
+<pre><code>##     Min.  1st Qu.   Median     Mean  3rd Qu.     Max. 
+##  -30.200  -11.570   -7.882    1.904   -0.799 1300.000</code></pre>
 </div>
 </div>
 <div id="question" class="section level1">
 <h1>Question:</h1>
 <p>Is this a good model? (Write your answer here.)</p>
+<pre class="r"><code># function to calculate root mean square error
+rmse &lt;- function(error){
+  sqrt(mean(error^2))
+}
+
+#taking mean of of the data as the baseline for test set1
+rmse(testData1[,arr_delay]-mean(testData1[,arr_delay]))</code></pre>
+<pre><code>## [1] 37.9876</code></pre>
+<pre class="r"><code>rmse(testData1[,arr_delay]-predict(model1,testData1))</code></pre>
+<pre><code>## [1] 16.82367</code></pre>
+<pre class="r"><code># clearly shows that model has low error compare to mean arr_delay
+
+#taking mean of of the data as the baseline for test set2
+rmse(testData2[,arr_delay]-mean(testData2[,arr_delay]))</code></pre>
+<pre><code>## [1] 37.85259</code></pre>
+<pre class="r"><code>rmse(testData2[,arr_delay]-predict(model1,testData2))</code></pre>
+<pre><code>## [1] 16.52076</code></pre>
+<pre class="r"><code># clearly shows that model has low error compare to mean arr_delay</code></pre>
 </div>
 
 
