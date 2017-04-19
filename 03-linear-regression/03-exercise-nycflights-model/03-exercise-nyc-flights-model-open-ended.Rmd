@@ -1,7 +1,7 @@
 ---
 title: "NYCFlights: Arrival Delay Regression Model (Open Ended Variation)"
-author: "[Your Name]"
-date: "[Today's Date]"
+author: "Abhishek Chaturvedi"
+date: "04/16/2017"
 output: html_document
 ---
 
@@ -21,15 +21,118 @@ Break the process down into steps and create a codeblock for each step.
 (You can start with the data that you created last week.)
 
 
-## Step 1: [Step Name] 
+## Step 1: Understand Problem 
+### Who :
+  - Client : Assuming airlines
+  - User : Planning department
+  - isAffected : Airline staff, customers, airport staff
+  
+### When :
+  - Solution needed ASAP
+  - Every Quarter to revist the effectiveness of ETAs
+  
+### What :
+  - Goal(s) Should airline change ETAs for the specific flights, what all factors affect, can airlines predict arrival delays accurately way ahead of time   - ETAs 
+  - Data - flights details, origin and destiation weathers and planes all can impact arr delays
 
-```{r "Step 1: [Step Name]" }
+### How :
+  - using R Studio
+
+## Step 2: Collect and Read Data
+
+```{r "Step 2: Collect and Read Data" }
+
+library(data.table)
+
+flightsData <- fread("data/flights.csv")
+planesData <- fread("data/planes.csv")
+airportsData <- fread("data/airports.csv")
+weatherData <- fread("data/weather.csv")
+
+flightsPlanesData <- merge(flightsData,planesData, by.x="tailnum", by.y="tailnum" , all.x = TRUE, suffixes = c(".flights", ".planes"))
+
+flightsPlanesOriginData <- merge(flightsPlanesData,airportsData, by.x = "origin", by.y = "faa", all.x = TRUE, suffixes = c(".flights", ".origin"))
+
+flightsPlanesOriginDestinationData <- merge(flightsPlanesOriginData,airportsData, by.x = "dest", by.y = "faa", all.x = TRUE, suffixes = c(".origin", ".dest"))
+
+flightsPlanesOriginDestinationWeatherData <- merge(flightsPlanesOriginDestinationData,weatherData, by.x = c("year.flights", "month", "day", "origin", "time_hour"), by.y = c("year", "month", "day", "origin", "time_hour"), all.x = TRUE, suffixes = c(".flights", ".weather"), allow.cartesian=FALSE)
 
 ```
 
-## Step 2: ...
+## Step 3: Fix Data
+- Data has already ben read as data table
+
+## Step 4: Initial Tests
+
+```{r "Naive Model" }
+summary(flightsPlanesOriginDestinationWeatherData[,.(arr_delay)])
+
+```
+
+### Identify all the predictors which has strong correlation with arr_delay
+
+```{r "correlation between planes data and arr_delay" }
+
+cor(flightsPlanesOriginDestinationWeatherData[,.(arr_delay,year.planes,engines, seats,speed)],use = "complete.obs")
+
+```
+
+as per above data there is no significant relation between planes data and arr_delay
+
+```{r "correlation between weather and arr_delay" }
+
+cor(flightsPlanesOriginDestinationWeatherData[,.(arr_delay,temp,dewp,humid,wind_dir,wind_speed,wind_gust,precip,pressure,visib)],use = "complete.obs")
+
+```
+
+As per above data arr_delay has a little more relation with humidity
+
+```{r "correlation between airports info and arr_delay" }
+
+cor(flightsPlanesOriginDestinationWeatherData[,.(arr_delay,lat.origin, lat.dest, lon.origin, lon.dest, alt.origin, alt.dest, tz.origin, tz.dest)],use = "complete.obs")
+
+```
+
+No significant relation found between airport geographical details and timezone and arr_delay
+
+```{r "correlation between flights arrival and departure time and arr_delay" }
+
+cor(flightsPlanesOriginDestinationWeatherData[,.(arr_delay,dep_time,sched_dep_time,arr_time,sched_arr_time,dep_delay,air_time,distance)],use = "complete.obs")
+
+```
+
+As per the data arr_delay has strong relation with dep_time, sched_dep_time, sched_arr_time, dep_delay
+
+```{r "correlation between flights year month date time etc and arr_delay" }
+
+cor(flightsPlanesOriginDestinationWeatherData[,.(arr_delay,month,day,hour.flights,minute)],use = "complete.obs")
+
+```
+
+As per the data arr_delay has strong relation with the hour of the day
+
+## Step 5: EDA
+
+```{r "generating model" }
+
+# removing all the data which doesnt seems to have affect on arr_delay or redundent
+flightsModelData <- flightsPlanesOriginDestinationWeatherData[,.(arr_delay,humid,dep_time, sched_dep_time,sched_arr_time,dep_delay,origin)]
+
+#generating training data and test data out of the data set
+trainingData <- flightsModelData[sample(.N,50000)]
+testData1 <- flightsModelData[sample(.N,50000)]
+testData2 <- flightsModelData[sample(.N,50000)]
+testData3 <- flightsModelData[sample(.N,50000)]
+
+#generating linear model on the seleced predictors
+model1 <- lm(arr_delay~., data=trainingData)
+
+summary(predict(model1, testData1))
+summary(predict(model1, testData2))
+summary(predict(model1, testData3))
 
 
+```
 
 # Question:
 
