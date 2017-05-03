@@ -1,7 +1,7 @@
 ---
 title: "NYCFlights: Arrival Delay Logictic Model"
-author: "[Your Name]"
-date: "[Today's Date]"
+author: "Abhishek Chaturvedi"
+date: "04/30/2017"
 output: html_document
 ---
 
@@ -25,6 +25,28 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r "Logistic and Inverse Logistic" }
 
+library("ggplot2")
+
+myLogistic <- function(x) {
+  return(1/(1+exp(-x)))
+}
+
+x1 <- c(-10:10)
+myLogistic(x1)
+ggplot(data.frame(x = x1) , aes(x)) +
+  stat_function(fun = myLogistic, geom = "line")
+
+
+myInverseLogistic <- function(x){
+  return(log(x/(1-x)))
+}
+
+x2 <- c(0,0.05,0.1,0.2,0.3,0.6,0.8,0.9,0.95,1)
+myInverseLogistic(x2)
+ggplot(data.frame(x = x2) , aes(x)) +
+  stat_function(fun = myInverseLogistic, geom = "line")
+
+
 ```
 
 
@@ -32,15 +54,89 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Using the rectangular data that you created from the earlier assignment and following theexample from the text and class, create a model for arr_delay >= 22 minutes. Describe/Explain each of the steps and show all work.
 
-KNIT YOUR DOCUMENT AS *HTML* AND SUBMIT IT AND THE `Rmd` file to your repository.   
+KNIT YOUR DOCUMENT AS *HTML* AND SUBMIT IT AND THE `Rmd` file to your repository.
 
+```{r "Model for arrival delay more than 22" }
+
+library('data.table')
+
+flightsData <- fread("data/flights.csv")
+planesData <- fread("data/planes.csv")
+airportsData <- fread("data/airports.csv")
+weatherData <- fread("data/weather.csv")
+
+flightsPlanesData <- merge(flightsData,planesData, by.x="tailnum", by.y="tailnum" , all.x = TRUE, suffixes = c(".flights", ".planes"))
+
+flightsPlanesOriginData <- merge(flightsPlanesData,airportsData, by.x = "origin", by.y = "faa", all.x = TRUE, suffixes = c(".flights", ".origin"))
+
+flightsPlanesOriginDestinationData <- merge(flightsPlanesOriginData,airportsData, by.x = "dest", by.y = "faa", all.x = TRUE, suffixes = c(".origin", ".dest"))
+
+flightsPlanesOriginDestinationWeatherData <- merge(flightsPlanesOriginDestinationData,weatherData, by.x = c("year.flights", "month", "day", "origin", "time_hour"), by.y = c("year", "month", "day", "origin", "time_hour"), all.x = TRUE, suffixes = c(".flights", ".weather"), allow.cartesian=FALSE)
+
+flights_data_joined <- flightsPlanesOriginDestinationWeatherData[sample(.N,50000)]
+
+# my old model consists of arr_delay,humid,dep_time,sched_dep_time,sched_arr_time,dep_delay,origin
+
+y <- "arr_delay"
+xs <- c('humid','dep_time', 'sched_dep_time','sched_arr_time','dep_delay','origin')
+
+yx <- flights_data_joined[,c(y,xs), with=FALSE]
+model1 <- lm(arr_delay ~ ., data=yx)
+summary(model1)
+
+# modifying data to create a new column 'gt22' for flights more than 22 hours delay
+yx <- within(yx, gt22 <- arr_delay>=22)
+
+model2 <- glm(formula = gt22 ~ . - arr_delay, family=binomial, data=yx)
+
+summary(model2)
+
+# naive model to compare with above model
+
+naiveModel <- glm(formula = gt22 ~ 1, family=binomial, data=yx)
+
+summary(naiveModel)
+
+```
 
 # Question:
 
-Is this a good model?  (Write your answer here.)
+Is this a good model?  
+
+AIC has improved compare to the naive model which suggests its a good model
 
 
 # PART B:
 
 Your model should be good at explaining tardiness. Now, assume that your job is to predict arrival delays a month in advance. You can no longer use all the features in your model. Retrain your model using only features that will be *known* only a month in advance of the departure time.  Show all steps as above.
+
+## Answer: 
+### my old model consists of
+arr_delay,humid,dep_time,sched_dep_time,sched_arr_time,dep_delay,origin
+
+out of this humid, dep_delay will not be available so the new model will be
+
+```{r "Model for arrival delay a month in advance" }
+
+y <- "arr_delay"
+xs <- c('dep_time', 'sched_dep_time','sched_arr_time','origin')
+
+yx <- flights_data_joined[,c(y,xs), with=FALSE]
+
+model3 <- lm(arr_delay ~ . , data=yx)
+
+summary(model3)
+
+# lets add carrier
+
+y <- "arr_delay"
+xs <- c('dep_time', 'sched_dep_time','sched_arr_time','origin','carrier')
+
+yx <- flights_data_joined[,c(y,xs), with=FALSE]
+model4 <- lm(arr_delay ~ . , data=yx)
+
+summary(model4)
+
+
+```
 
