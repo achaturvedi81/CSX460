@@ -1,7 +1,7 @@
 ---
 title: "Classification Mettrics"
-author: "Christopher Brown"
-date: "October 5, 2015"
+author: "Abhishek Chaturvedi"
+date: "May 17, 2017"
 output: html_document
 ---
 
@@ -27,6 +27,109 @@ Write functions of `y` and `y_hat` to calculate the following classification met
 
 ```{r "definitions", echo=FALSE}
 
+# test data
+x <- c(1,1,0,1,1,0,1)
+x1 <- c(1,1,1,0,0,1,1)
+
+# funciton to get the true positive rate
+# function accepts two vectors of observed and predicted values
+tpr <- function(yo, yp){
+  if (is.null(yo) || is.null(yp)) {
+    stop("NULL 'yo' or 'yp' value")
+  }
+  if(length(yo) != length(yp)){
+    stop(" number of predicted and observed responses are not same ")
+  }
+  return(sum(yo & yp)/sum(yo))
+}
+tpr(x,x1)
+
+fpr <- function(yo, yp) {
+  if (is.null(yo) || is.null(yp)) {
+    stop("NULL 'yo' or 'yp' value")
+  }
+  if(length(yo) != length(yp)){
+    stop(" number of predicted and observed responses are not same ")
+  }
+  return(sum((yp != yo) & yp)/(length(yo)-sum(yo)))
+}
+fpr(x,x1)
+
+tnr <- function(yo, yp) {
+  if (is.null(yo) || is.null(yp)) {
+    stop("NULL 'yo' or 'yp' value")
+  }
+  if(length(yo) != length(yp)){
+    stop(" number of predicted and observed responses are not same ")
+  }
+  return(sum(!yo & !yp)/(length(yo)-sum(yo)))
+}
+tnr(x,x1)
+
+fnr <- function(yo, yp) {
+  if (is.null(yo) || is.null(yp)) {
+    stop("NULL 'yo' or 'yp' value")
+  }
+  if(length(yo) != length(yp)){
+    stop(" number of predicted and observed responses are not same ")
+  }
+  return(sum(!yp & yo)/sum(yo))
+}
+fnr(x,x1)
+
+# sensitivity is true positive rate
+sensitivity <- function (yo, yp){
+  return(tpr(yo,yp))
+}
+sensitivity(x, x1)
+
+#specificity is true negative rate
+specificity <- function(yo, yp){
+  return(tnr(yo,yp))
+}
+specificity(x, x1)
+
+# recall is same as true positive rate
+recall <- function(yo,yp){
+  return(tpr(yo,yp))
+}  
+recall(x,x1)
+
+# is true positive compare to predictied positives
+precision <- function(yo,yp){
+  if (is.null(yo) || is.null(yp)) {
+    stop("NULL 'yo' or 'yp' value")
+  }
+  if(length(yo) != length(yp)){
+    stop(" number of predicted and observed responses are not same ")
+  }
+  return(sum(yo & yp)/sum(yp))
+}
+precision(x,x1)
+
+# number of observed +ve cases in given data set
+prevalence <- function (yo){
+  if (is.null(yo)) {
+    stop("NULL 'yo' value")
+  }
+  return(sum(yo)/length(yo))
+}
+
+prevalence(x1)
+
+# accuracy is total True +ve plus -ve / Observed +ve plus -ve
+accuracy <- function(yo, yp){
+  if (is.null(yo) || is.null(yp)) {
+    stop("NULL 'yo' or 'yp' value")
+  }
+  if(length(yo) != length(yp)){
+    stop(" number of predicted and observed responses are not same ")
+  }
+  
+  return((sum(yo & yp) + sum(!yo & !yp))/length(yo))
+}
+
+accuracy(x, x1)
 
 ```
 
