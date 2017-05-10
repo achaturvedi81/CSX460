@@ -2,7 +2,9 @@
 title: "Resampling"
 author: "Abhishek Chaturvedi"
 date: "May 17, 2017"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 **KNIT YOUR DOCUMENT AS *HTML* AND SUBMIT IT AND THE `Rmd` file**
@@ -19,13 +21,34 @@ output: html_document
 set.seed(1) 
 x <- runif(20,1,20)
 
-sd_cv # <- Your work here 
+#sd_cv # <- Your work here 
+sd_cv <- function(x) {
+  data_split <- split(x, 1:10) # creating 10 equal chunks of the vector
+  means <- c() # creating holder variable for mean of all subsets
+  for(i in 1:10){
+   means <- append(means, mean(unlist(data_split[-i]))) # removing one chunk and converting list back to a vector to calculate mean
+  }
+  return(sd(means)) # returning SD on the mean values found above
+}
+#sd_cv(x)
 
-sd_boot # <- Your work here
+#sd_boot # <- Your work here
+sd_boot <- function(x) {
+  data_split <- split(x, 1:10) #creating 10 equal chunks
+  means <- c()
+  for(i in 1:10){
+    sampler <- sample(c(1:10), 10, replace=TRUE) #generating bootstrap chunks out of 10 chunks
+    means <- append(means, mean(unlist(data_split[sampler]))) # calculating mean of all the generated bootstraped chunks
+  }
+  return(sd(means))
+}
+
+#sd_boot(x)
+
 ```
 
 
 ### Your answers here: 
 
-- sd_cv   is: `r sd_cv`
-- sd_boot is: `r sd_boot`
+- sd_cv   is: `r sd_cv(x)`
+- sd_boot is: `r sd_boot(x)`

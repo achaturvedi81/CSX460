@@ -25,7 +25,7 @@ Write functions of `y` and `y_hat` to calculate the following classification met
 * Accuracy
 * Kappa
 
-```{r "definitions", echo=FALSE}
+```{r "definitions"}
 
 # test data
 x <- c(1,1,0,1,1,0,1)
@@ -131,6 +131,37 @@ accuracy <- function(yo, yp){
 
 accuracy(x, x1)
 
+
+kappa <- function(yo,yp){
+  if (is.null(yo) || is.null(yp)) {
+    stop("NULL 'yo' or 'yp' value")
+  }
+  if(length(yo) != length(yp)){
+    stop(" number of predicted and observed responses are not same ")
+  }
+  
+  # calculating matrix a,b,c,d
+  
+  # when observed and predicted both are true
+  a <- sum(yo & yp)
+  # when observed false and predicted is true
+  b <- sum(!yo & yp)
+  # when observed true and predicted is false
+  c <- sum(yo & !yp)
+  # when observed and predicted both are false
+  d <- sum(!yo & !yp)
+  
+  # observed proportionate agreement   
+  p0 <- (a+d)/(a+b+c+d)
+  
+  # the probability of random agreement
+  pe <- (((a+b)/(a+b+c+d))*((a+c)/(a+b+c+d))) + (((c+d)/(a+b+c+d))*((b+d)/(a+b+c+d)))
+  
+  return((p0-pe)/(1-pe))
+}
+
+kappa(x,x1)
+
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
@@ -143,6 +174,33 @@ you created last week.
 
 ```{r "evaluations"}
 
+#install.packages("biomod2")
+library("biomod2")
+library('data.table')
+
+flightsDataJoined <- readRDS("flightsDataJoined.rds")
+
+y <- "arr_delay"
+xs <- c('humid','dep_time', 'sched_dep_time','sched_arr_time','dep_delay','origin')
+yx <- flightsDataJoined[,c(y,xs),with=FALSE]
+yx <- na.omit(yx)
+yx <- within(yx, gt22 <- arr_delay>=22)
+model <- glm(formula = gt22 ~ . - arr_delay, family=binomial, data=yx)
+#summary(model)
+
+y1 <- yx$gt22
+y2 <- BinaryTransformation(predict(model,yx, type="response"),0.5)
+
+tpr(y1,y2)
+tnr(y1,y2)
+fpr(y1,y2)
+fnr(y1,y2)
+sensitivity(y1,y2)
+specificity(y1,y2)
+recall(y1,y2)
+precision(y1,y2)
+prevalence(y1)
+kappa(y1,y2)
 
 ```
 
