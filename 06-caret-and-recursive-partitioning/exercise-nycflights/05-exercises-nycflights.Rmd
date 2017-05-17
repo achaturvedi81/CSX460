@@ -1,8 +1,10 @@
 ---
 title: "Caret / Recursive Partitioning"
-author: "Your Name Here"
-date: "Today's Date"
-output: pdf_document
+author: "Abhishek Chaturvedi"
+date: "05/15/2017"
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r init, warning=FALSE, echo=FALSE, message=FALSE}
@@ -24,6 +26,29 @@ Show all work.
 
 ```{r logistic model}
 # Your Work Here
+library('data.table')
+flightsDataJoined <- readRDS("flightsDataJoined.rds")
+
+y <- "arr_delay"
+xs <- c('humid','dep_time', 'sched_dep_time','sched_arr_time','dep_delay','origin')
+yx <- flightsDataJoined[,c(y,xs),with=FALSE]
+yx <- na.omit(yx)
+
+set.seed(333)
+inTraining <- createDataPartition(na.omit(yx[,arr_delay]), p = .75, list = FALSE)
+training <- yx[inTraining, ]
+testing <- yx[-inTraining, ]
+
+set.seed(3333)
+lmModel1 <- train(arr_delay ~ ., data = training, method = "lm")
+
+library(pROC)
+
+#performance testing using the model
+yhat <- predict(lmModel1,testing,type="raw")
+postResample(pred = yhat, obs = testing$arr_delay)
+
+
 ```
 
 
@@ -43,8 +68,43 @@ Using the `caret` and `rpart` packages, create a **classification** model for fl
 Show and describe all work
 
 ```{r rpart model}
-# Your Work Here
+# Creating a classification model for flights which has arr_delay more than 15 mins
+
+library("rpart")
+library("rpart.plot")
+
+# adding an extea column gt15 to the data with binary values if delay is more than 15 mins
+yx <- within(yx, gt15 <- arr_delay>=15)
+
+set.seed(333)
+inTraining <- createDataPartition(na.omit(yx[,arr_delay]), p = .75, list = FALSE)
+trainingData <- yx[inTraining, ]
+testingData <- yx[-inTraining, ]
+
+treeModel <- rpart(gt15 ~ humid + dep_time + sched_dep_time + sched_arr_time + dep_delay + origin, data = trainingData, method = "class")
+rpart.plot(treeModel)
+
+treeModel
+
+yhat <- predict(treeModel,testingData,type="class")
+
+confusionMatrix(data = yhat, reference = testingData$gt15)
+
+# the model is depending on dep_delay if its more than 20 the arr_delay will be more than 15 mins have a probability is 0.87
+
+library("pROC")
+library("ROCR")
+
+gt15Predicted <- predict(treeModel,testingData,type="vector")
+
+plot(roc(testingData$gt15, gt15Predicted, direction="<"),
+     col="yellow", lwd=3, main="flights delayed more than 15 mins")
+
+
 ```
+
+
+
 
 
 ### Questions:
