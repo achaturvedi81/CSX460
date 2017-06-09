@@ -1,8 +1,10 @@
 ---
 title: "Customer Lifetime Value"
-author: "Christopher Brown"
-date: "May 2, 2016"
-output: html_document
+author: "Abhishek Chaturvedi"
+date: "June 8, 2017"
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 You work as an analyst for *Spotifoo*, an online music streaming service. Spotifoo charges its customers a low fixed rate to stream music online. In addition to a monthly subscription fee, *Spotifoo* allows its customers to purchase products and services mentioned using the *Spotifoo* app. Some customers make no additional purchase besides the monthly subscriptions fee. Other make regular purchases.  
@@ -25,6 +27,62 @@ For each management question, describe your process. In particular, describe:
 - how you get a training and test data set, 
 - the modeling techniques you would use
 
-# Who Are *Spotifoo*'s best customers?
+## Response for the model
+Two models are required one to predict the customer classification and second one to predict the lifetime
 
-# Customer Lifetime Value
+### Customer classification model
+For this model the input needed from the business stakeholders is how they want to classify their customers and how many categories they need.
+e.g. 4 categories
+
+ - Most Valued : Customers who paid sign up fee and subscribed to monthly subscription for more than 3 years or purchased 15 products within 1 year of sign up
+ - Valued : Customers who paid sign up fee and subscribed to monthly subscription for more than a year or purchased 5 products within 1 year of sign up
+ - Average : Customers who paid sign up fee and subscribed to monthly subscription for less than a year
+ - Below Average : Customer who only paid the sign up fee
+
+Above sample requirements will need data in a flat structure (sample predictors given below)
+
+User Data :
+
+  - Age
+  - Gender
+  - Month of signup
+  - Year of signup
+  - State
+  - Zip code
+  - Marital status
+  - Number of reviews posted
+  - Total number of products bought
+  - Total number of months of subscription
+  - Service Ended or not
+  - Genres liked
+  - Artists liked
+
+Songs/Products Data :
+
+  - Number of products avaialble to sell
+  - Number of Artists for which songs are avaialble
+  - Number of Songs available
+  - Number of playlists
+ 
+ 
+Use the existing customer data to identify the classifications they belong to based on rules provided by business
+
+Use bootstrap mechanism to generate training and test data out of the data
+
+use random forrest to generate the model to classify customers
+
+### Customer lifetime value model
+Business stakeholders need to defined lifetime segments they are interested in
+
+ - Period for which 75% of the customers will remain customers
+ - Period for which 50% of the customers will remain customers
+ - Period for which 25% of the customers will remain customers
+
+The next question for them would be
+
+1. Do they want to identify the customer on the day of signup his possibility of engagement to customize offers for him ?
+2. Do they want to identify the possibility of future engagement based on the user's current engagement to customize offers for him ?
+
+We can use all predictors avaialble including total number of months of subscription to identify the future predictions
+
+use ARIMA model with preidctors as well as months of spscriptions as y to predict CLV
